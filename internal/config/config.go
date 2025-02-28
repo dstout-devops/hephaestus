@@ -57,7 +57,7 @@ func LoadConfig() (Config, error) {
 	} else {
 		// Default to looking for config.yaml in the current directory
 		viper.SetConfigName("config")
-		viper.SetConfigType("yaml")
+		viper.SetConfigType("yml")
 		viper.AddConfigPath(".")
 	}
 
