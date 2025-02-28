@@ -1,5 +1,5 @@
 key:
-  bits: 2048
+  type: "ed25519"
   # output: "private.key"
 csr:
   common_name: "default"
