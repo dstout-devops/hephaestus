@@ -1,0 +1,16 @@
+services:
+  hephaestus:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    #env_file:
+        # Ensure that the variables in .env match the same variables in devcontainer.json
+        # - .env
+    
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined

@@ -1,0 +1,49 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+{
+	"name": "hephaestus",
+	"dockerComposeFile": "docker/compose.yml",
+	"service": "hephaestus",
+	"runServices": ["hephaestus"],
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "username": "vscode",
+            "userUid": "1000",
+            "userGid": "1000",
+            "upgradePackages": "true"
+        },
+		"ghcr.io/devcontainers/features/go:1": {
+			"version": "latest"
+		}
+	},
+
+    "customizations": {
+        "vscode": {
+            "settings": {
+				"go": {
+					"toolsManagement.checkForUpdates": "local",
+					"useLanguageServer": true,
+					"goroot": "/usr/local/go",
+					"gopath": "/go",
+
+					"formatTool": "goimports",
+					"buildOnSave": "workspace",
+					
+					"toolsEnvVars": {
+						"GO111MODULE": "on"
+					}
+				}
+			}
+		}
+    },
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// "postCreateCommand": "sh .devcontainer/postCreateCommand.sh"
+	"postStartCommand": "sh .devcontainer/scripts/postStartCommand.sh"
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}
