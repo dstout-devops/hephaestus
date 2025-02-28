@@ -1,0 +1,19 @@
+key:
+  bits: 2048
+  # output: "private.key"
+csr:
+  subject:
+    common_name: "default"
+    organization: "Mastercard Worldwide"
+    organizational_unit: "server"
+    country: "US"
+    state: "Missouri"
+    locality: "Saint Louis"
+    # ip_address: ""
+endpoint: "https://ca.example.com/submit"
+esf:
+  program_id: "1"
+  service_id: "1"
+  application_id: "1"
+certificate:
+  # output: "certificate.pem"
