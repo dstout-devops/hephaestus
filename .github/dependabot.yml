@@ -11,17 +11,17 @@ updates:
     schedule:
       interval: weekly
   
-  - package-ecosystem: "github-actions" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
   
-  - package-ecosystem: "docker" # See documentation for possible values
-    directory: ".devcontainer/docker" # Location of package manifests
+  - package-ecosystem: "docker"
+    directory: ".devcontainer/docker"
     schedule:
       interval: "weekly"
   
-  - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "gomod"
+    directory: "/"
     schedule:
       interval: "weekly"
