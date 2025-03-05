@@ -1,5 +1,6 @@
 key:
-  type: "ed25519"
+  type: "ed25519" #accept ed25519, rsa
+  size: 2048
   # output: "private.key"
 csr:
   common_name: "default"

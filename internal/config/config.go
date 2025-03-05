@@ -21,7 +21,8 @@ type Config struct {
 
 // KeyConfig holds key-related settings.
 type KeyConfig struct {
-	Bits   int    `mapstructure:"bits"`
+	Type   string `mapstructure:"type"`
+	Size   int    `mapstructure:"bits"`
 	Output string `mapstructure:"output"`
 }
 

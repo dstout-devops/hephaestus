@@ -36,7 +36,7 @@ csr:
 	assert.NoError(t, err)
 
 	// Check values from file
-	assert.Equal(t, 2048, cfg.Key.Bits)
+	assert.Equal(t, 2048, cfg.Key.Size)
 	assert.Equal(t, "example.com", cfg.CSR.CommonName)
 	assert.Equal(t, "Example Org", cfg.CSR.Organization)
 	// Check defaults
@@ -65,7 +65,7 @@ csr:
 	assert.NoError(t, err)
 
 	// Check zero values for unspecified fields
-	assert.Equal(t, 0, cfg.Key.Bits)
+	assert.Equal(t, 0, cfg.Key.Size)
 	assert.Equal(t, "example.com", cfg.CSR.CommonName)
 	assert.Equal(t, "", cfg.CSR.Organization)
 	// Check defaults set by Viper
