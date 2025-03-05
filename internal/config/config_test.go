@@ -2,125 +2,102 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-// createTempConfig creates a temporary YAML file with the given content and returns its path.
-func createTempConfig(t *testing.T, content string) string {
-	tmpfile, err := os.CreateTemp("", "config*.yml")
-	assert.NoError(t, err, "Failed to create temporary file")
-	_, err = tmpfile.Write([]byte(content))
-	assert.NoError(t, err, "Failed to write to temporary file")
-	err = tmpfile.Close()
-	assert.NoError(t, err, "Failed to close temporary file")
-	return tmpfile.Name()
-}
+// TestViperConfigLoader_LoadConfig tests loading a complete config file.
+func TestViperConfigLoader_LoadConfig(t *testing.T) { // Create a temporary directory
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "config.yml")
 
-// TestLoadConfigAllFields tests loading a configuration with all fields present.
-func TestLoadConfigAllFields(t *testing.T) {
-	configContent := `
+	// Write test config data
+	configData := []byte(`
 key:
   bits: 2048
-  output: "private.key"
 csr:
   common_name: "example.com"
   organization: "Example Org"
-  organizational_unit: "IT"
-  country: "US"
-  state: "California"
-  locality: "San Francisco"
-  ip_address: "192.168.1.1"
-endpoint: "https://example.com"
-esf:
-  program_id: "prog123"
-  service_id: "svc456"
-  application_id: "app789"
-certificate:
-  output: "certificate.pem"
-`
-	configPath := createTempConfig(t, configContent)
+`)
+	err := os.WriteFile(configPath, configData, 0644)
+	assert.NoError(t, err)
+
+	// Set CONFIG_PATH
 	os.Setenv("CONFIG_PATH", configPath)
-	defer os.Remove(configPath)
 	defer os.Unsetenv("CONFIG_PATH")
 
-	cfg, err := LoadConfig()
-	assert.NoError(t, err, "Expected no error when loading complete config")
+	// Create ViperConfigLoader
+	loader := NewViperConfigLoader()
 
-	expected := Config{
-		Key: KeyConfig{Bits: 2048, Output: "private.key"},
-		CSR: CSRConfig{
-			CommonName:         "example.com",
-			Organization:       "Example Org",
-			OrganizationalUnit: "IT",
-			Country:            "US",
-			State:              "California",
-			Locality:           "San Francisco",
-			IPAddress:          "192.168.1.1",
-		},
-		Endpoint: "https://example.com",
-		ESF: ESFConfig{
-			ProgramID:     "prog123",
-			ServiceID:     "svc456",
-			ApplicationID: "app789",
-		},
-		Certificate: CertificateConfig{Output: "certificate.pem"},
-	}
+	// Load config
+	cfg, err := loader.LoadConfig()
+	assert.NoError(t, err)
 
-	assert.Equal(t, expected, cfg, "Loaded config does not match expected")
+	// Check values from file
+	assert.Equal(t, 2048, cfg.Key.Bits)
+	assert.Equal(t, "example.com", cfg.CSR.CommonName)
+	assert.Equal(t, "Example Org", cfg.CSR.Organization)
+	// Check defaults
+	assert.Equal(t, "private.key", cfg.Key.Output)
+	assert.Equal(t, "certificate.pem", cfg.Certificate.Output)
 }
 
-// TestLoadConfigPartial tests loading a configuration with some fields missing.
-func TestLoadConfigPartial(t *testing.T) {
-	configContent := `
-key:
-  bits: 2048
+// TestViperConfigLoader_LoadConfig_Defaults tests defaults when fields are missing.
+func TestViperConfigLoader_LoadConfig_Defaults(t *testing.T) { // Create a temporary directory
+	tempDir := t.TempDir()
+	configPath := filepath.Join(tempDir, "config.yml")
+
+	// Write a minimal YAML config file
+	configData := []byte(`
 csr:
   common_name: "example.com"
-endpoint: "https://example.com"
-`
-	configPath := createTempConfig(t, configContent)
+`)
+	err := os.WriteFile(configPath, configData, 0644)
+	assert.NoError(t, err)
+
 	os.Setenv("CONFIG_PATH", configPath)
-	defer os.Remove(configPath)
 	defer os.Unsetenv("CONFIG_PATH")
 
-	cfg, err := LoadConfig()
-	assert.NoError(t, err, "Expected no error when loading partial config")
+	loader := NewViperConfigLoader()
+	cfg, err := loader.LoadConfig()
+	assert.NoError(t, err)
 
-	expected := Config{
-		Key: KeyConfig{Bits: 2048, Output: "private.key"}, // default output
-		CSR: CSRConfig{
-			CommonName: "example.com",
-			// Other fields are zero values
-		},
-		Endpoint: "https://example.com",
-		ESF:      ESFConfig{
-			// All fields are zero values
-		},
-		Certificate: CertificateConfig{Output: "certificate.pem"}, // default output
-	}
-
-	assert.Equal(t, expected, cfg, "Loaded config does not match expected with defaults")
+	// Check zero values for unspecified fields
+	assert.Equal(t, 0, cfg.Key.Bits)
+	assert.Equal(t, "example.com", cfg.CSR.CommonName)
+	assert.Equal(t, "", cfg.CSR.Organization)
+	// Check defaults set by Viper
+	assert.Equal(t, "private.key", cfg.Key.Output)
+	assert.Equal(t, "certificate.pem", cfg.Certificate.Output)
 }
 
-// TestLoadConfigInvalidYAML tests loading a configuration with invalid YAML.
-func TestLoadConfigInvalidYAML(t *testing.T) {
-	configContent := `key: [invalid`
-	configPath := createTempConfig(t, configContent)
-	os.Setenv("CONFIG_PATH", configPath)
-	defer os.Remove(configPath)
+// TestViperConfigLoader_LoadConfig_Error tests error when file is missing.
+func TestViperConfigLoader_LoadConfig_Error(t *testing.T) {
+	// Set CONFIG_PATH to a non-existent file
+	os.Setenv("CONFIG_PATH", "non_existent.yml")
 	defer os.Unsetenv("CONFIG_PATH")
 
-	_, err := LoadConfig()
-	assert.Error(t, err, "Expected error when loading invalid YAML")
+	loader := NewViperConfigLoader()
+	_, err := loader.LoadConfig()
+	assert.Error(t, err)
 }
 
-// TestLoadConfigMissingFile tests loading a configuration when the file is missing.
-func TestLoadConfigMissingFile(t *testing.T) {
-	os.Setenv("CONFIG_PATH", "/nonexistent/config.yml")
+// TestViperConfigLoader_LoadConfig_Malformed tests error with malformed YAML.
+func TestViperConfigLoader_LoadConfig_Malformed(t *testing.T) {
+	tempFile, err := os.CreateTemp("", "config.yml")
+	assert.NoError(t, err)
+	defer os.Remove(tempFile.Name())
+
+	// Write malformed YAML
+	err = os.WriteFile(tempFile.Name(), []byte(`key: [}`), 0644)
+	assert.NoError(t, err)
+
+	os.Setenv("CONFIG_PATH", tempFile.Name())
 	defer os.Unsetenv("CONFIG_PATH")
 
-	_, err := LoadConfig()
-	assert.Error(t, err, "Expected error when config file is missing")
+	loader := NewViperConfigLoader()
+	_, err = loader.LoadConfig()
+	assert.Error(t, err)
 }

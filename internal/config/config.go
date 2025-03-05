@@ -6,6 +6,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+type ConfigLoader interface {
+	LoadConfig() (Config, error)
+}
+
 // Config represents the top-level configuration structure.
 type Config struct {
 	Key         KeyConfig         `mapstructure:"key"`
@@ -44,35 +48,46 @@ type CertificateConfig struct {
 	Output string `mapstructure:"output"`
 }
 
-// LoadConfig loads the application configuration from a YAML file.
-func LoadConfig() (Config, error) {
-	// Set default values for optional fields
-	viper.SetDefault("key.output", "private.key")
-	viper.SetDefault("certificate.output", "certificate.pem")
+// ViperConfigLoader implements the ConfigLoader interface using Viper.
+type ViperConfigLoader struct {
+	v *viper.Viper
+}
 
-	// Check if a custom config path is provided via environment variable
+// NewViperConfigLoader creates a new ViperConfigLoader with default settings.
+func NewViperConfigLoader() *ViperConfigLoader {
+	v := viper.New()
+	v.SetDefault("key.output", "private.key")
+	v.SetDefault("certificate.output", "certificate.pem")
+	return &ViperConfigLoader{v: v}
+}
+
+// LoadConfig loads the configuration using the Viper instance.
+func (l *ViperConfigLoader) LoadConfig() (Config, error) {
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath != "" {
-		viper.SetConfigFile(configPath)
+		l.v.SetConfigFile(configPath)
 	} else {
-		// Default to looking for config.yaml in the current directory
-		viper.SetConfigName("config")
-		viper.SetConfigType("yml")
-		viper.AddConfigPath(".")
+		l.v.SetConfigName("config")
+		l.v.SetConfigType("yaml")
+		l.v.AddConfigPath(".")
 	}
 
-	// Read the configuration file
-	err := viper.ReadInConfig()
+	err := l.v.ReadInConfig()
 	if err != nil {
 		return Config{}, err
 	}
 
-	// Unmarshal the configuration into the Config struct
 	var cfg Config
-	err = viper.Unmarshal(&cfg)
+	err = l.v.Unmarshal(&cfg)
 	if err != nil {
 		return Config{}, err
 	}
 
 	return cfg, nil
+}
+
+// LoadConfig is a convenience function for backward compatibility.
+func LoadConfig() (Config, error) {
+	loader := NewViperConfigLoader()
+	return loader.LoadConfig()
 }

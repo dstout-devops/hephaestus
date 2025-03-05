@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	app := command.NewApp()
+	app := command.NewApp(nil)
 
 	if err := app.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "hephaestus: %s\n", err)
