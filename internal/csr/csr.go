@@ -1,6 +1,7 @@
 package csr
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -13,6 +14,11 @@ import (
 
 // GenerateCSR creates a Certificate Signing Request (CSR) using the provided private key and CSR configuration.
 func GenerateCSR(privKey interface{}, cfg config.CSRConfig) ([]byte, error) {
+	// Ensure the private key implements crypto.Signer
+	if _, ok := privKey.(crypto.Signer); !ok {
+		return nil, errors.New("private key does not implement crypto.Signer")
+	}
+
 	// Create the CSR subject using pkix.Name with default zero values
 	subject := pkix.Name{
 		CommonName: cfg.CommonName, // CommonName is a string, so it can be set directly

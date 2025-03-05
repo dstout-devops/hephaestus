@@ -11,7 +11,7 @@ import (
 func main() {
 	app := command.NewApp()
 
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "hephaestus: %s\n", err)
 		os.Exit(1)
 	}
